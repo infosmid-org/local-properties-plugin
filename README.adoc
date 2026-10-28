@@ -52,7 +52,7 @@ Declare the plugin in the catalog:
 local-properties = "{project-version}"
 
 [plugins]
-local-properties = { id = "{plugin-id}", version.ref = "local-properties" }
+infosmid-local-properties = { id = "{plugin-id}", version.ref = "local-properties" }
 ----
 
 Then reference it through the generated `libs` accessor.
@@ -61,7 +61,7 @@ Then reference it through the generated `libs` accessor.
 [source,groovy]
 ----
 plugins {
-    alias(libs.plugins.local.properties)
+    alias(libs.plugins.infosmid.local.properties)
 }
 ----
 
@@ -69,7 +69,7 @@ plugins {
 [source,kotlin]
 ----
 plugins {
-    alias(libs.plugins.local.properties)
+    alias(libs.plugins.infosmid.local.properties)
 }
 ----
 
