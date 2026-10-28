@@ -1,0 +1,143 @@
+= Gradle Local Properties Plugin
+:project-version: 1.0.2
+:plugin-id: org.infosmid.plugins.local-properties
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: highlight.js
+
+image:https://github.com/infosmid-org/local-properties-plugin/actions/workflows/snapshot.yml/badge.svg[Build Status,link=https://github.com/infosmid-org/local-properties-plugin/actions/workflows/snapshot.yml]
+image:https://img.shields.io/badge/install-plugin-brown.svg[Gradle Plugin Portal,link=https://plugins.gradle.org/plugin/{plugin-id}]
+image:https://img.shields.io/badge/License-MIT-blue.svg[License,link=LICENSE]
+
+A Gradle plugin that lets a local `gradle.local.properties` file override the values in `gradle.properties`.
+
+Developers often need different property values on their own machine, such as a local repository URL, a feature flag or a credential.
+Editing the shared `gradle.properties` risks committing those values by accident.
+With this plugin you keep the overrides in `gradle.local.properties` and leave the shared file untouched.
+
+* Properties in `gradle.local.properties` replace the project properties of the same name.
+* Properties that don't exist yet are added.
+* A warning is logged whenever the file is found and contains properties, so overrides are never silent.
+
+== Build Configuration
+
+Apply the plugin to the project that contains (or should read) `gradle.local.properties`.
+
+=== Groovy DSL (`build.gradle`)
+
+[source,groovy,subs="attributes+"]
+----
+plugins {
+    id '{plugin-id}' version '{project-version}'
+}
+----
+
+=== Kotlin DSL (`build.gradle.kts`)
+
+[source,kotlin,subs="attributes+"]
+----
+plugins {
+    id("{plugin-id}") version "{project-version}"
+}
+----
+
+=== Version Catalog (`gradle/libs.versions.toml`)
+
+Declare the plugin in the catalog:
+
+[source,toml,subs="attributes+"]
+----
+[versions]
+local-properties = "{project-version}"
+
+[plugins]
+local-properties = { id = "{plugin-id}", version.ref = "local-properties" }
+----
+
+Then reference it through the generated `libs` accessor.
+
+.Groovy DSL (`build.gradle`)
+[source,groovy]
+----
+plugins {
+    alias(libs.plugins.local.properties)
+}
+----
+
+.Kotlin DSL (`build.gradle.kts`)
+[source,kotlin]
+----
+plugins {
+    alias(libs.plugins.local.properties)
+}
+----
+
+NOTE: The plugin is applied per project. In a multi-project build, apply it in each project that has its own `gradle.local.properties`.
+
+See the https://plugins.gradle.org/plugin/{plugin-id}[Gradle Plugin Portal page] for other versions.
+
+== Usage
+
+Create a file named `gradle.local.properties` in the project directory.
+
+[source,properties]
+----
+# gradle.local.properties
+myRepoUrl=http://localhost:8081/repository/maven-public
+featureX=true
+----
+
+Ideally add this file to `.gitignore` so it is never committed:
+
+[source]
+----
+gradle.local.properties
+----
+
+Build scripts read the values as usual:
+
+.Groovy DSL
+[source,groovy]
+----
+repositories {
+    maven { url = findProperty('myRepoUrl') ?: 'https://repo.maven.apache.org/maven2' }
+}
+----
+
+.Kotlin DSL
+[source,kotlin]
+----
+repositories {
+    maven(url = findProperty("myRepoUrl") as String? ?: "https://repo.maven.apache.org/maven2")
+}
+----
+
+=== Logging
+
+[cols="2,3", options="header"]
+|===
+| Message | Meaning
+
+| `local-properties:overriding with gradle.local.properties`
+| The file exists and has at least one property (warning).
+
+| `local-properties:set:<name>`
+| An existing property was overridden.
+
+| `local-properties:add:<name>`
+| The property only exists in `gradle.local.properties` and was added (warning).
+|===
+
+=== `listProperties` task
+
+The plugin registers a `listProperties` task that reports which properties were overridden or added.
+
+[source,shell]
+----
+./gradlew listProperties
+----
+
+== License
+
+Released under the link:LICENSE[MIT License].

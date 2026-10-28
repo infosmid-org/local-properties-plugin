@@ -1,19 +1,23 @@
 plugins {
     id 'java-gradle-plugin'
-    id 'org.ysb33r.gradletest' version '3.0.0-alpha.2'
-    id 'com.gradle.plugin-publish' version '0.15.0'
     id 'maven-publish'
-    id 'signing'
-}
-group = 'io.jumpco.open'
-if (project.findProperty('buildVersion') == 'LOCAL_SNAPSHOT') {
-    version = 'LOCAL_SNAPSHOT'
-} else {
-    version = '1.0.1'
+    alias(libs.plugins.maven.publish)
+    alias(libs.plugins.gradle.plugin.publish)
+    alias(libs.plugins.asciidoctorj)
 }
 
+group = 'org.infosmid.plugins'
+
+def getVersionFromFile() {
+    def versionFile = new File(rootProject.projectDir, 'version.txt')
+    return versionFile.text.trim()
+}
+version = providers.gradleProperty('releaseVersion').getOrNull() ?: getVersionFromFile()
+description = 'Override properties with gradle.local.properties'
+def projectName = 'Local Properties Plugin'
+def projectDescription = project.description
+
 repositories {
-    mavenLocal()
     mavenCentral()
 }
 
@@ -28,27 +32,150 @@ jar {
 }
 
 dependencies {
-    testCompileOnly gradleTestKit()
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
-    testImplementation 'org.assertj:assertj-core:3.21.0'
-
-    gradleTest 'org.junit.jupiter:junit-jupiter:5.7.2'
-    gradleTest 'org.assertj:assertj-core:3.21.0'
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
+    testImplementation libs.assertj.core
+    testImplementation gradleTestKit()
 }
 
-targetCompatibility = JavaVersion.VERSION_1_8
-sourceCompatibility = JavaVersion.VERSION_1_8
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+    options.encoding = 'UTF-8'
+}
 
 gradlePlugin {
-    // Define the plugin
+    website.set('https://github.com/infosmid-org/local-properties-plugin')
+    vcsUrl.set('https://github.com/infosmid-org/local-properties-plugin')
     plugins {
-        localPropertiesPlugin {
-            id = 'io.jumpco.open.gradle.local-properties'
-            displayName = 'Local Properties Plugin'
-            description = 'Override properties with gradle.local.properties'
-            implementationClass = 'io.jumpco.open.gradle.LocalPropertiesPlugin'
+        register('org.infosmid.plugins.local-properties') {
+            implementationClass = 'org.infosmid.plugins.gradle.local_props.LocalPropertiesPlugin'
+            displayName = projectName
+            description = projectDescription
+            tags.set(['override', 'properties'])
         }
     }
+}
+
+publishing {
+    repositories {
+        maven {
+            name = 'GitHubPackages'
+            url = uri("https://maven.pkg.github.com/infosmid-org/${rootProject.name}")
+            credentials {
+                username = providers.environmentVariable('GITHUB_ACTOR').getOrElse('')
+                password = providers.environmentVariable('GITHUB_TOKEN').getOrElse('')
+            }
+        }
+    }
+}
+
+mavenPublishing {
+    publishToMavenCentral()
+    if (providers.gradleProperty('signingInMemoryKey').isPresent()) {
+        signAllPublications()
+    }
+    coordinates(project.group.toString(), rootProject.name, project.version.toString())
+    pom {
+        name = projectName
+        description = projectDescription
+        inceptionYear = '2021'
+        url = "https://github.com/infosmid-org/${rootProject.name}"
+        licenses {
+            license {
+                name = 'The MIT License'
+                url = 'https://opensource.org/licenses/MIT'
+                distribution = 'repo'
+            }
+        }
+        developers {
+            developer {
+                id = 'corneil'
+                name = 'Corneil du Plessis'
+                url = 'https://github.com/corneil'
+            }
+        }
+        scm {
+            url = "https://github.com/infosmid-org/${rootProject.name}"
+            connection = "scm:git:git://github.com/infosmid-org/${rootProject.name}.git"
+            developerConnection = "scm:git:ssh://git@github.com/infosmid-org/${rootProject.name}.git"
+        }
+        issueManagement {
+            system = 'GitHub'
+            url = "https://github.com/infosmid-org/${rootProject.name}/issues"
+        }
+    }
+}
+
+// User guide is README.adoc included by src/docs/asciidoc/index.adoc
+asciidoc {
+    publications {
+        main {
+            sourceSet {
+                sourceDir = 'src/docs/asciidoc'
+                sources {
+                    include 'index.adoc'
+                }
+                resources {
+                    include '**/*.png'
+                    include '**/*.xml'
+                    include '**/*.js'
+                    include '**/*.css'
+                }
+                attributes {
+                    addAll 'toc': 'left',
+                        'idprefix': '',
+                        'idseparator': '-',
+                        'docinfo1': '',
+                        // Lets index.adoc link to the API docs: link:{api-docs}/index.html[API]
+                        'api-docs': 'api'
+                }
+                missingIncludesAreFatal()
+            }
+            output 'asciidoctorj', 'html'
+        }
+    }
+}
+
+// Properties read by gradle/site-docs.gradle (siteDocsZip); must be set before it is applied.
+// The plugin is published as org.infosmid.plugins:local-properties-plugin and the docs zip as
+// org.infosmid:local-properties-plugin-doc, the same as kfsm-viz-plugin.
+ext {
+    siteDocsTitle       = projectName
+    siteDocsSummary     = projectDescription
+    siteDocsGuideTask   = 'asciidoctorHtml'
+    siteDocsApiTask     = 'javadoc'
+    siteDocsPublication = 'pluginMaven'
+    siteDocsArtifactId  = rootProject.name
+    siteDocsGroupId     = 'org.infosmid'
+    siteDocsTags        = ['Gradle', 'Plugin', 'Properties']
+    siteDocsLicense     = 'MIT'
+    siteDocsSourceUrl   = "https://github.com/infosmid-org/${rootProject.name}".toString()
+}
+apply from: "$rootProject.projectDir/gradle/site-docs.gradle"
+
+tasks.register('updateReadmeVersion') {
+    group = 'documentation'
+    description = 'Modifies :project-version: attribute at the top of README.adoc'
+    def readmeFile = layout.projectDirectory.file('README.adoc').asFile
+    def projectVersion = providers.provider { project.version.toString() }
+    inputs.property('version', projectVersion)
+    outputs.file(readmeFile)
+    doLast {
+        if (!readmeFile.exists()) return
+        def content = readmeFile.text
+        def versionAttr = ":project-version: ${projectVersion.get()}"
+        if (content =~ /(?m)^:project-version:.*$/) {
+            readmeFile.text = content.replaceFirst(/(?m)^:project-version:.*$/, versionAttr)
+        }
+    }
+}
+
+asciidoctorHtml.dependsOn('updateReadmeVersion')
+
+tasks.register('docs') {
+    group = 'documentation'
+    dependsOn('asciidoctorHtml', 'javadoc', 'siteDocsZip')
 }
 
 // Add a source set for the functional test suite
@@ -59,6 +186,7 @@ sourceSets {
 
 gradlePlugin.testSourceSets(sourceSets.functionalTest)
 configurations.functionalTestImplementation.extendsFrom(configurations.testImplementation)
+configurations.functionalTestRuntimeOnly.extendsFrom(configurations.testRuntimeOnly)
 
 // Add a task to run the functional tests
 tasks.register('functionalTest', Test) {
@@ -76,38 +204,4 @@ tasks.named('check') {
 tasks.named('test') {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
-}
-
-pluginBundle {
-    website = 'https://open.jumpco.io/projects/local-properties-plugin.html'
-    vcsUrl = 'https://github.com/open-jumpco/local-properties-plugin'
-    plugins {
-        localPropertiesPlugin {
-            displayName = 'Local Properties Plugin'
-            description = 'Local Properties Plugin. Override properties with gradle.local.properties'
-            tags = ['override', 'properties']
-            version = project.version
-        }
-    }
-}
-
-
-task sourcesJar(type: Jar) {
-    from fileTree(dir: 'src/main/java')
-    archiveClassifier = 'sources'
-}
-
-artifacts {
-    archives jar
-    archives sourcesJar
-}
-
-gradleTest {
-    versions '7.2', '7.1.1', '7.0.2'
-    versions '6.8.3', '6.6.1', '6.5.1', '6.4.1', '6.3', '6.2.1', '6.1.1', '6.0.1'
-    versions '5.4.1', '5.5.1', '5.6.4'
-
-    beforeTest {
-        println "  ${it.name}"
-    }
 }

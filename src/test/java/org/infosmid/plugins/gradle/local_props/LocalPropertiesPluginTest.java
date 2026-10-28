@@ -15,7 +15,7 @@
     CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
     DEALINGS IN THE SOFTWARE.
  */
-package io.jumpco.open.gradle;
+package org.infosmid.plugins.gradle.local_props;
 
 import static org.assertj.core.api.Assertions.*;
 import org.gradle.api.Project;
@@ -23,14 +23,14 @@ import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.jupiter.api.Test;
 
 /**
- * A simple unit test for the 'io.jumpco.open.greeting' plugin.
+ * A simple unit test for the 'org.infosmid.greeting' plugin.
  */
 class LocalPropertiesPluginTest {
   @Test
   void pluginRegistersATask() {
     // Create a test project and apply the plugin
     Project project = ProjectBuilder.builder().build();
-    project.getPlugins().apply("io.jumpco.open.gradle.local-properties");
+    project.getPlugins().apply("org.infosmid.plugins.local-properties");
 
     // Verify the result
     assertThat(project.getTasks().findByName("listProperties")).isNotNull();

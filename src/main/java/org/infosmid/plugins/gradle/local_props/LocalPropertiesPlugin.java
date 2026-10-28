@@ -15,7 +15,7 @@
     CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
     DEALINGS IN THE SOFTWARE.
  */
-package io.jumpco.open.gradle;
+package org.infosmid.plugins.gradle.local_props;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -40,14 +40,14 @@ public class LocalPropertiesPlugin implements Plugin<Project> {
             try (FileInputStream fis = new FileInputStream(localGradleProperties)) {
                 properties.load(fis);
                 if (!properties.isEmpty()) {
-                    project.getLogger().warn("local-properties:overriding with " + localGradleProperties.getName());
+                    project.getLogger().warn("local-properties:overriding with {}", localGradleProperties.getName());
                     for (String key : properties.stringPropertyNames()) {
                         String property = properties.getProperty(key);
                         if (project.hasProperty(key)) {
-                            project.getLogger().lifecycle("local-properties:set:" + key + "=" + property);
+                            project.getLogger().lifecycle("local-properties:set:{}",key);
                             actions.put(key, "override");
                         } else {
-                            project.getLogger().warn("local-properties:add:" + key + "=" + property);
+                            project.getLogger().warn("local-properties:add:{}", key);
                             actions.put(key, "added");
 
                         }
@@ -55,10 +55,10 @@ public class LocalPropertiesPlugin implements Plugin<Project> {
                     }
                 }
             } catch (IOException e) {
-                project.getLogger().error("local-properties:exception:" + e, e);
+                project.getLogger().error("local-properties:exception:{}", e, e);
             }
         } else {
-            project.getLogger().info("local-properties:" + localGradleProperties.getName() + " not found");
+            project.getLogger().info("local-properties:{} not found", localGradleProperties.getName());
         }
         project.getLogger().info("local-properties:loaded");
         project.getTasks().register("listProperties", task -> {
@@ -67,7 +67,7 @@ public class LocalPropertiesPlugin implements Plugin<Project> {
                 for (Map.Entry<String, String> entry : actions.entrySet()) {
                     t.getProject()
                         .getLogger()
-                        .lifecycle("local-properties:list:" + entry.getValue() + ":" + entry.getKey());
+                        .lifecycle("local-properties:list:" + entry.getValue());
                 }
                 t.getProject().getLogger().debug("listProperties:end");
             });

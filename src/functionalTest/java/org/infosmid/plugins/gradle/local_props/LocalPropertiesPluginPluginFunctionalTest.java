@@ -15,7 +15,7 @@
     CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
     DEALINGS IN THE SOFTWARE.
  */
-package io.jumpco.open.gradle;
+package org.infosmid.plugins.gradle.local_props;
 
 import static org.assertj.core.api.Assertions.*;
 import org.gradle.testkit.runner.BuildResult;
@@ -28,7 +28,7 @@ import java.io.Writer;
 import java.nio.file.Files;
 
 /**
- * A simple functional test for the 'io.jumpco.open.greeting' plugin.
+ * A simple functional test for the 'org.infosmid.greeting' plugin.
  */
 class LocalPropertiesPluginPluginFunctionalTest {
     @Test
@@ -38,7 +38,7 @@ class LocalPropertiesPluginPluginFunctionalTest {
         Files.createDirectories(projectDir.toPath());
         writeString(new File(projectDir, "settings.gradle"), "");
         writeString(new File(projectDir, "build.gradle"),
-            "plugins { id('io.jumpco.open.gradle.local-properties') }");
+            "plugins { id('org.infosmid.plugins.local-properties') }");
         writeString(new File(projectDir, "gradle.properties"), "abc=xyz\n");
         writeString(new File(projectDir, "gradle.local.properties"), "abc=def\nghi=123");
 
@@ -51,8 +51,8 @@ class LocalPropertiesPluginPluginFunctionalTest {
         BuildResult result = runner.build();
         String output = result.getOutput();
         assertThat(output).contains("listProperties");
-        assertThat(output).contains("set:abc=def");
-        assertThat(output).contains("add:ghi=123");
+        assertThat(output).contains("set:abc");
+        assertThat(output).contains("add:ghi");
     }
 
     private void writeString(File file, String string) throws IOException {

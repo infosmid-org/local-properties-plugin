@@ -1,0 +1,13 @@
+= Gradle Local Properties Plugin
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: highlight.js
+
+== Links
+
+=== link:api/index.html[API Docs]
+
+=== link:https://github.com/infosmid-org/local-properties-plugin[Source]
+
+include::../../../README.adoc[leveloffset=+1]

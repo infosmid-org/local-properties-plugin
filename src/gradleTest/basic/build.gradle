@@ -1,4 +1,4 @@
-apply plugin: 'io.jumpco.open.gradle.local-properties'
+apply plugin: 'org.infosmid.plugins.local-properties'
 
 task runGradleTest {
     dependsOn('listProperties')
