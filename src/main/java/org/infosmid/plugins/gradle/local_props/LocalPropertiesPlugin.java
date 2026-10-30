@@ -1,5 +1,5 @@
 /*
-    Copyright 2021 Open JumpCO
+    Copyright 2021-2026 Open JumpCO, Infosmid
 
     Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
     documentation files (the "Software"), to deal in the Software without restriction, including without limitation
@@ -44,10 +44,10 @@ public class LocalPropertiesPlugin implements Plugin<Project> {
                     for (String key : properties.stringPropertyNames()) {
                         String property = properties.getProperty(key);
                         if (project.hasProperty(key)) {
-                            project.getLogger().lifecycle("local-properties:set:{}",key);
+                            project.getLogger().info("local-properties:set:{}",key);
                             actions.put(key, "override");
                         } else {
-                            project.getLogger().warn("local-properties:add:{}", key);
+                            project.getLogger().info("local-properties:add:{}", key);
                             actions.put(key, "added");
 
                         }
@@ -62,12 +62,13 @@ public class LocalPropertiesPlugin implements Plugin<Project> {
         }
         project.getLogger().info("local-properties:loaded");
         project.getTasks().register("listProperties", task -> {
+            task.setGroup("help");
             task.doLast(t -> {
                 t.getProject().getLogger().debug("listProperties:start");
                 for (Map.Entry<String, String> entry : actions.entrySet()) {
                     t.getProject()
                         .getLogger()
-                        .lifecycle("local-properties:list:" + entry.getValue());
+                        .lifecycle("local-properties:list:{}:{}", entry.getValue(), entry.getKey());
                 }
                 t.getProject().getLogger().debug("listProperties:end");
             });

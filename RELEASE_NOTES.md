@@ -2,7 +2,8 @@
 
 ## What's New
 
-- Migrated to 'org.infosmid.plugins'
+- Updated log levels
+- Assign the `listProperties` task to the `help` group.
 
 ## 📦 Artifacts
 

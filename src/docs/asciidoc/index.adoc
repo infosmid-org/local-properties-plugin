@@ -1,5 +1,5 @@
 = Gradle Local Properties Plugin
-:project-version: 1.0.2
+:project-version: 1.0.3
 :toc: left
 :toclevels: 3
 :icons: font
